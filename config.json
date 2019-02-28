@@ -1,0 +1,15 @@
+{
+  "plugins":{
+        webbkoll:{
+            "cron": "0 */4 * * *"
+        }
+    },
+  "urls": [
+    {
+      "url": "https://www.eea.europa.eu/",
+    },
+    {
+      "url": "https://biodiversity.europa.eu/",
+    }
+  ]
+}

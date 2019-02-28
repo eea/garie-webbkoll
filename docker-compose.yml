@@ -1,0 +1,48 @@
+version: '3'
+services:
+    influxdb:
+        image: 'influxdb:latest'
+        ports:
+            - 8086:8086
+        environment:
+            - INFLUXDB_ADMIN_USER=admin
+            - INFLUXDB_ADMIN_PASSWORD=admin
+
+    webbkoll-backend:
+        image: eeacms/webbkoll-backend
+    webbkoll:
+        image: eeacms/webbkoll
+        environment:
+            - BACKEND_HOST=webbkoll-backend
+            - BACKEND_PORT=8100
+        depends_on:
+            - webbkoll_backend
+        links:
+            - webbkoll-backend:webbkoll-backend
+    garie-plugin:
+        image: 'eeacms/garie-webbkoll:latest'
+        privileged: true
+        volumes:
+            - /var/run/docker.sock:/run/docker.sock
+            - /usr/bin/docker:/bin/docker
+        ports:
+            - 3000:3000
+        environment:
+            - HOST=influxdb
+            - BACKEND_HOST=webbkoll-backend
+            - BACKEND_PORT=8100
+            - WEBBKOLL_HOST=webbkoll
+            - WEBBKOLL_PORT=4000
+        links:
+            - webbkoll-backend:webbkoll-backend
+            - webbkoll:webbkoll
+        depends_on:
+            - influxdb
+            - webbkoll
+
+    chronograf:
+        image: 'chronograf:latest'
+        ports:
+            - 8888:8888
+        depends_on:
+            - influxdb
