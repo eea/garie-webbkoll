@@ -23,8 +23,16 @@ const getDataFromBackend = async( url ) => {
             });
             resolve(response.body);
         } catch (err) {
+            if (err.error !== undefined) {
+                if (err.error.success === false){
+                    console.log(`Failed to get data for ${url}`);
+                    resolve(err.error);
+                    return;
+                }
+            }
             console.log(`Failed to get data for ${url}`, err);
             reject(`Failed to get data for ${url}`);
+            resolve(err.error);
         }
     });
 }
