@@ -16,6 +16,8 @@ services:
         environment:
             - BACKEND_HOST=webbkoll-backend
             - BACKEND_PORT=8100
+        ports:
+            - 4000:4000
         depends_on:
             - webbkoll-backend
         links:
