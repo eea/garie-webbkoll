@@ -82,5 +82,5 @@ On start garie-webbkoll will start to gather statistics for the websites added t
 | --------------------------------------- | -------------------- | --------------------------------------------------------- |
 | `url`                                   | `string` (required)  | Url to get webbkoll statistics for.                       |
 
-*Note
+## Note
 Currently the webbkoll garie plugin is not storing any data in InfluxDB.
