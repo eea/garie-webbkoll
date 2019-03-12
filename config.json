@@ -1,7 +1,41 @@
 {
   "plugins":{
         "webbkoll":{
-            "cron": "0 */4 * * *"
+            "cron": "0 */4 * * *",
+            "countries_cat2": [
+                "Austria",
+                "Belgium",
+                "Bulgaria",
+                "Croatia",
+                "Cyprus",
+                "Czechia",
+                "Denmark",
+                "Estonia",
+                "Finland",
+                "France",
+                "Germany",
+                "Greece",
+                "Hungary",
+                "Ireland",
+                "Italy",
+                "Latvia",
+                "Lithuania",
+                "Luxembourg",
+                "Malta",
+                "Netherlands",
+                "Poland",
+                "Portugal",
+                "Romania",
+                "Slovakia",
+                "Slovenia",
+                "Spain",
+                "Sweden",
+                "United Kingdom"
+            ],
+            "countries_cat1": [
+                "Denmark",
+                "Unknown"
+            ]
         }
     },
   "urls": [
