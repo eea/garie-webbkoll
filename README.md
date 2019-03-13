@@ -1,3 +1,4 @@
+
 # Garie webbkoll plugin
 
 <p align="center">
@@ -73,7 +74,10 @@ On start garie-webbkoll will start to gather statistics for the websites added t
 
 | Property | Type                | Description                                                                          |
 | -------- | ------------------- | ------------------------------------------------------------------------------------ |
-| `cron`   | `string` (optional) | Cron timer. Supports syntax can be found [here].(https://www.npmjs.com/package/cron) |
+| `plugins.webbkoll.cron`   | `string` (optional) | Cron timer. Supports syntax can be found [here].(https://www.npmjs.com/package/cron) |
+| `plugins.webbkoll.countries_cat1`   | `list of strings` mandatory | If the servers is located in one of theese countries, it will get 20 points |
+| `plugins.webbkoll.countries_cat2`   | `list of strings` mandatory | If the servers is located in one of theese countries, it will get 16 points |
+
 | `urls`   | `object` (required) | Config for webbkoll. More detail below                                               |
 
 **urls object**
