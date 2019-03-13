@@ -24,7 +24,9 @@ If your interested in an out the box solution that supports multiple performance
 If you want to run `garie-webbkoll` standalone you can find out how below.
 
 ## Score for webbkoll
+
 The score of a website is calculated using the following formula:
+
 | Field | Value | Score|
 |-------|--------|-----|
 |HTTPS by default|Yes|16|
