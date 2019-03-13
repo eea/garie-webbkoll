@@ -51,15 +51,18 @@ The score of a website is calculated using the following formula:
 || if there are *first-party* cookies marked as red and there are *third-party* cookies|0|
 
 The points from each field are summed and that's the final score, except 2 special cases. If **HTTPS by default** or  **Server location** got 0 points, the final score is **0**.
-The points for each field are always written in influxdb, even if the total is **0**
+
+The points for each field are always written in influxdb, even if the total is **0**.
+
 The fields written in influxdb are:
-    - value (the sum of the points)
-    - https
-    - content_security_policy
-    - referrer_policy
-    - cookies
-    - third_party_requests
-    - server_location
+
+- value (the sum of the points)
+- https
+- content_security_policy
+- referrer_policy
+- cookies
+- third_party_requests
+- server_location
 
 ## Getting Started
 
