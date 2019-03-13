@@ -7,8 +7,8 @@
 
 **Highlights**
 
--   Poll for [webbkoll](https://github.com/andersju/webbkoll) reports on any website
--   View all historic webbkoll reports.
+-   Poll for [webbkoll](https://github.com/andersju/webbkoll) reports on any website and stores the data into InfluxDB
+-   View all historic webbkoll reports
 -   Setup within minutes
 
 ## Overview of garie-webbkoll
@@ -22,6 +22,42 @@ Garie-webbkoll was developed as a plugin for the [Garie](https://github.com/boyn
 If your interested in an out the box solution that supports multiple performance tools like `lighthouse`, `google-speed-insight` and `web-page-test` then checkout [Garie](https://github.com/boyney123/garie).
 
 If you want to run `garie-webbkoll` standalone you can find out how below.
+
+## Score for webbkoll
+The score of a website is calculated using the following formula:
+| Field | Value | Score|
+|-------|--------|-----|
+|HTTPS by default|Yes|16|
+||Yes, but has issues|8|
+||No; insecure|0|
+|Content Security Policy|Good policy|16|
+||Implemented, but has problems|8|
+||Invalid header|0|
+||Not implemented|0|
+|Referrer Policy|Referrers not leaked|16|
+||Referrers partially leaked|8|
+||Referrers leaked|0|
+||Unknown|0|
+|Third-party requests|0|16|
+||>0|0|
+|Server location| if country in *countries_cat1* list from config|20|
+|| if country in *countries_cat2* list from config|16|
+|| if country is not in any list|0|
+|Cookies| if all *first-party* cookies are marked as green and no *third-party* cookies are used|16|
+|| if all *first-party* cookies are marked as green and there are *third-party* cookies|8|
+|| if there are *first-party* cookies marked as red and no *third-party* cookies are used|8|
+|| if there are *first-party* cookies marked as red and there are *third-party* cookies|0|
+
+The points from each field are summed and that's the final score, except 2 special cases. If **HTTPS by default** or  **Server location** got 0 points, the final score is **0**.
+The points for each field are always written in influxdb, even if the total is **0**
+The fields written in influxdb are:
+    - value (the sum of the points)
+    - https
+    - content_security_policy
+    - referrer_policy
+    - cookies
+    - third_party_requests
+    - server_location
 
 ## Getting Started
 
