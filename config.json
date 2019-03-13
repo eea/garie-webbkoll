@@ -2,6 +2,10 @@
   "plugins":{
         "webbkoll":{
             "cron": "0 */4 * * *",
+            "countries_cat1": [
+                "Denmark",
+                "Unknown"
+            ],
             "countries_cat2": [
                 "Austria",
                 "Belgium",
@@ -31,10 +35,6 @@
                 "Spain",
                 "Sweden",
                 "United Kingdom"
-            ],
-            "countries_cat1": [
-                "Denmark",
-                "Unknown"
             ]
         }
     },

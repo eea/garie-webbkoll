@@ -14,6 +14,41 @@ const { JSDOM } = jsdom;
 const webbkoll_backend_uri = "http://"+process.env.BACKEND_HOST + ":" + process.env.BACKEND_PORT;
 const webbkoll_uri = "http://"+process.env.WEBBKOLL_HOST + ":" + process.env.WEBBKOLL_PORT+"/check";
 
+const default_countries_cat1 = [
+        "Denmark",
+        "Unknown"
+    ];
+const default_countries_cat2 = [
+        "Austria",
+        "Belgium",
+        "Bulgaria",
+        "Croatia",
+        "Cyprus",
+        "Czechia",
+        "Denmark",
+        "Estonia",
+        "Finland",
+        "France",
+        "Germany",
+        "Greece",
+        "Hungary",
+        "Ireland",
+        "Italy",
+        "Latvia",
+        "Lithuania",
+        "Luxembourg",
+        "Malta",
+        "Netherlands",
+        "Poland",
+        "Portugal",
+        "Romania",
+        "Slovakia",
+        "Slovenia",
+        "Spain",
+        "Sweden",
+        "United Kingdom"
+    ];
+
 const myEmptyGetMeasurement = async (item, data) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -138,15 +173,17 @@ function getResults(url, file){
 
     // Server location
     var server_score = 0;
+    const countries_cat1 = config.plugins.webbkoll.countries_cat1 || default_countries_cat1;
+    const countries_cat2 = config.plugins.webbkoll.countries_cat2 || default_countries_cat2;
     try{
         const server_element = dom.window.document.querySelector("a[href='#server-location']").closest('li').textContent;
         const server_element_text = server_element.split("Server location:")[1].split("—")[0].trim();
-        if (config.plugins.webbkoll.countries_cat2.includes(server_element_text)) {
-            server_score = 16;
+        if (countries_cat1.includes(server_element_text)) {
+            server_score = 20;
         }
         else{
-            if (config.plugins.webbkoll.countries_cat1.includes(server_element_text)) {
-                server_score = 20;
+            if (countries_cat2.includes(server_element_text)) {
+                server_score = 16;
             }
             else {
                 server_score = 0;
@@ -158,6 +195,7 @@ function getResults(url, file){
         server_score = 0;
     }
 
+    // Final score
     var total = total_multiplier * (https_score + csp_score + rp_score + cookies_score + tpr_score + server_score);
 
     var result = [{
