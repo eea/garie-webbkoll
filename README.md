@@ -24,7 +24,9 @@ If your interested in an out the box solution that supports multiple performance
 If you want to run `garie-webbkoll` standalone you can find out how below.
 
 ## Score for webbkoll
+
 The score of a website is calculated using the following formula:
+
 | Field | Value | Score|
 |-------|--------|-----|
 |HTTPS by default|Yes|16|
@@ -48,16 +50,19 @@ The score of a website is calculated using the following formula:
 || if there are *first-party* cookies marked as red and no *third-party* cookies are used|8|
 || if there are *first-party* cookies marked as red and there are *third-party* cookies|0|
 
-The points from each field are summed and that's the final score, except 2 special cases. If **HTTPS by default** or  **Server location** got 0 points, the final score is **0**.
-The points for each field are always written in influxdb, even if the total is **0**
+The points from each field are summed and that's the final score (value), except 2 special cases. If **HTTPS by default** or  **Server location** got 0 points, the final score is **0**.
+
+The points for each field are always written in influxdb, even if the final score is **0**.
+
 The fields written in influxdb are:
-    - value (the sum of the points)
-    - https
-    - content_security_policy
-    - referrer_policy
-    - cookies
-    - third_party_requests
-    - server_location
+
+- value (final score)
+- https
+- content_security_policy
+- referrer_policy
+- cookies
+- third_party_requests
+- server_location
 
 ## Getting Started
 
