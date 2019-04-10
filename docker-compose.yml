@@ -16,7 +16,7 @@ services:
             - BACKEND_HOST=webbkoll-backend
             - BACKEND_PORT=8100
         depends_on:
-            - webbkoll_backend
+            - webbkoll-backend
         links:
             - webbkoll-backend:webbkoll-backend
     garie-plugin:

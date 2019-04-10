@@ -118,6 +118,11 @@ On start garie-webbkoll will start to gather statistics for the websites added t
 | `plugins.webbkoll.cron`   | `string` (optional) | Cron timer. Supports syntax can be found [here].(https://www.npmjs.com/package/cron) |
 | `plugins.webbkoll.countries_cat1`   | `list of strings` mandatory | If the servers is located in one of theese countries, it will get 20 points |
 | `plugins.webbkoll.countries_cat2`   | `list of strings` mandatory | If the servers is located in one of theese countries, it will get 16 points |
+| `plugins.my_plugin.retry`   | `object` (optional) | Configuration how to retry the failed tasks |
+| `plugins.my_plugin.retry.after`   | `number` (optional, default 30) | Minutes before we retry to execute the tasks |
+| `plugins.my_plugin.retry.times`   | `number` (optional, default 3) | How many time to retry to execute the failed tasks |
+| `plugins.my_plugin.retry.timeRange`   | `number` (optional, default 360) | Period in minutes to be checked in influx, to know if a task failed |
+
 
 | `urls`   | `object` (required) | Config for webbkoll. More detail below                                               |
 
