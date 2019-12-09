@@ -134,3 +134,7 @@ On start garie-webbkoll will start to gather statistics for the websites added t
 
 ## Note
 Currently the webbkoll garie plugin is not storing any data in InfluxDB.
+
+## Important
+Always upgrade both webbkoll and webbkoll-backend, because there might be backward compatibility issues between them.
+For webbkoll-backend look for changes in https://github.com/andersju/webbkoll-backend and compare with our fork at https://github.com/eea/webbkoll-backend
