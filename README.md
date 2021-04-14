@@ -126,6 +126,10 @@ On start garie-webbkoll will start to gather statistics for the websites added t
 
 | `urls`   | `object` (required) | Config for webbkoll. More detail below                                               |
 
+MAX_AGE_OF_REPORT_FILES - int (default to 365), Maximum age (in days) of report files that can be deleted.
+MAX_AGE_OF_REPORT_VIDEOS - int (default to 100), Maximum age (in days) of report videos that can be deleted.
+CRON_DELETE_OLD_REPORTS - cronjob (default to '0 5 * * *') The frequency of checking old report files / videos.
+
 **urls object**
 
 | Property                                | Type                 | Description                                               |
@@ -138,3 +142,5 @@ Currently the webbkoll garie plugin is not storing any data in InfluxDB.
 ## Important
 Always upgrade both webbkoll and webbkoll-backend, because there might be backward compatibility issues between them.
 For webbkoll-backend look for changes in https://github.com/andersju/webbkoll-backend and compare with our fork at https://github.com/eea/webbkoll-backend
+
+For more information please go to the [garie-plugin](https://github.com/eea/garie-plugin) repo.
