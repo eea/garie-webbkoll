@@ -144,3 +144,4 @@ Always upgrade both webbkoll and webbkoll-backend, because there might be backwa
 For webbkoll-backend look for changes in https://github.com/andersju/webbkoll-backend and compare with our fork at https://github.com/eea/webbkoll-backend
 
 For more information please go to the [garie-plugin](https://github.com/eea/garie-plugin) repo.
+
