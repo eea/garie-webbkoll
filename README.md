@@ -122,13 +122,10 @@ On start garie-webbkoll will start to gather statistics for the websites added t
 | `plugins.webbkoll.retry.after`   | `number` (optional, default 30) | Minutes before we retry to execute the tasks |
 | `plugins.webbkoll.retry.times`   | `number` (optional, default 3) | How many time to retry to execute the failed tasks |
 | `plugins.webbkoll.retry.timeRange`   | `number` (optional, default 360) | Period in minutes to be checked in influx, to know if a task failed |
-
-
-| `urls`   | `object` (required) | Config for webbkoll. More detail below                                               |
-
-MAX_AGE_OF_REPORT_FILES - int (default to 365), Maximum age (in days) of report files that can be deleted.
-MAX_AGE_OF_REPORT_VIDEOS - int (default to 100), Maximum age (in days) of report videos that can be deleted.
-CRON_DELETE_OLD_REPORTS - cronjob (default to '0 5 * * *') The frequency of checking old report files / videos.
+| `plugins.webbkoll.delete_files_by_type`   | `object` (optional, no default) | Configuration for deletion of custom files. (e.g. mp4 files)  |
+| `plugins.webbkoll.delete_files_by_type.type`   | `string` (required for 'delete_files_by_type') | The type / extension of the files we want to delete. (e.g. "mp4"). |
+| `plugins.webbkoll.delete_files_by_type.age`   | `number` (required for 'delete_files_by_type') | Maximum age (in days) of the custom files. Any older file will be deleted. |
+| `urls`   | `object` (required) | Config for webbkoll. More detail below |
 
 **urls object**
 
