@@ -124,7 +124,6 @@ On start garie-webbkoll will start to gather statistics for the websites added t
 | `plugins.webbkoll.retry.timeRange`   | `number` (optional, default 360) | Period in minutes to be checked in influx, to know if a task failed |
 | `plugins.webbkoll.MAX_AGE_OF_REPORT_FILES`   | `number` (optional, default 365) | Maximum age (in days) of report files that can be deleted. |
 | `plugins.webbkoll.MAX_AGE_OF_REPORT_VIDEOS`   | `number` (optional, default 100) | Maximum age (in days) of report videos that can be deleted. |
-| `plugins.webbkoll.CRON_DELETE_OLD_REPORTS`   | `number` (optional, default '0 5 * * *') | The frequency of checking old report files or videos. |
 | `urls`   | `object` (required) | Config for webbkoll. More detail below |
 
 **urls object**
