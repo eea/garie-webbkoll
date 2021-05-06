@@ -46,6 +46,7 @@ const default_countries_cat2 = [
         "United Kingdom"
     ];
 
+
 const myEmptyGetMeasurement = async (item, data) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -60,10 +61,10 @@ const myEmptyGetMeasurement = async (item, data) => {
 function getResults(url, file){
     const dom = new JSDOM(file);
 
-    var total_multiplier = 1;
+    let total_multiplier = 1;
 
     // HTTPS
-    var https_score = 0;
+    let https_score = 0;
     try{
         const https_element = dom.window.document.querySelector("a[href='#https']").closest('li').textContent;
         const https_element_text = https_element.split("HTTPS by default:")[1].trim();
@@ -83,7 +84,7 @@ function getResults(url, file){
     }
 
     // Content security policy
-    var csp_score = 0;
+    let csp_score = 0;
     try{
         const csp_element = dom.window.document.querySelector("a[href='#csp']").closest('li').textContent;
         const csp_element_text = csp_element.split("Content Security Policy:")[1].trim();
@@ -102,7 +103,7 @@ function getResults(url, file){
     }
 
     // Referrer Policy
-    var rp_score = 0;
+    let rp_score = 0;
     try{
         const rp_element = dom.window.document.querySelector("a[href='#referrers']").closest('li').textContent;
         const rp_element_text = rp_element.split("Referrer Policy:")[1].trim();
@@ -121,17 +122,17 @@ function getResults(url, file){
     }
 
     // Cookies
-    var cookies_score = 0;
+    let cookies_score = 0;
     try{
         const cookies_first = dom.window.document.querySelector("#cookies-first");
         const cookies_third = dom.window.document.querySelector("#cookies-third");
 
-        var third_party_exist = true;
+        let third_party_exist = true;
         if (cookies_third === undefined){
             third_party_exist = false;
         }
 
-        var all_first_party_green = true;
+        let all_first_party_green = true;
         if (cookies_first !== undefined){
             if (cookies_first.querySelector("table").querySelectorAll(".icon-times.alert").length > 0){
                 all_first_party = false;
@@ -151,7 +152,7 @@ function getResults(url, file){
         cookies_score = 0;
     }
     // Third-party requests
-    var tpr_score = 0;
+    let tpr_score = 0;
     try{
         const tpr_element = dom.window.document.querySelector("a[href='#requests']").closest('li').textContent;
         const tpr_element_text = tpr_element.split("Third-party requests:")[1].trim();
@@ -169,7 +170,7 @@ function getResults(url, file){
     }
 
     // Server location
-    var server_score = 0;
+    let server_score = 0;
     const countries_cat1 = config.plugins.webbkoll.countries_cat1 || default_countries_cat1;
     const countries_cat2 = config.plugins.webbkoll.countries_cat2 || default_countries_cat2;
     try{
@@ -193,9 +194,9 @@ function getResults(url, file){
     }
 
     // Final score
-    var total = total_multiplier * (https_score + csp_score + rp_score + cookies_score + tpr_score + server_score);
+    const total = total_multiplier * (https_score + csp_score + rp_score + cookies_score + tpr_score + server_score);
 
-    var result = [{
+    const result = [{
         measurement:"webbkoll",
         tags:{url},
         fields:{
@@ -255,7 +256,7 @@ const getDataFromWebbkoll = async( url, folder ) => {
             });
             const status_uri = response.request.uri.href;
 
-            var next_uri;
+            let next_uri;
             while (true){
                 const status_response = await request({
                     method: 'GET',
@@ -298,11 +299,11 @@ const getData = async (item) => {
             const reportFolder = garie_plugin.utils.helpers.reportDirNow(reportDir);
 
 
-            var html_data = await getDataFromWebbkoll(url, reportFolder);
+            let html_data = await getDataFromWebbkoll(url, reportFolder);
 
             html_data = html_data.replace("</html>","<style type='text/css'>header.navigation,#results-title>.beta,.footer-outer{display:none !important;}</style></html>");
 
-            var html_file = path.join(reportFolder, 'webbkoll.html');
+            const html_file = path.join(reportFolder, 'webbkoll.html');
 
             fs.outputFile(html_file, html_data)
             .then(() => console.log(`Saved webbkoll html file for ${url}`))
@@ -312,7 +313,7 @@ const getData = async (item) => {
 
             const json_data = await getDataFromBackend(url);
 
-            var json_file = path.join(reportFolder, 'webbkoll.json');
+            const json_file = path.join(reportFolder, 'webbkoll.json');
 
             fs.outputJson(json_file, json_data, {spaces: 2})
             .then(() => console.log(`Saved webbkoll json file for ${url}`))
