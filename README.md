@@ -122,9 +122,9 @@ On start garie-webbkoll will start to gather statistics for the websites added t
 | `plugins.webbkoll.retry.after`   | `number` (optional, default 30) | Minutes before we retry to execute the tasks |
 | `plugins.webbkoll.retry.times`   | `number` (optional, default 3) | How many time to retry to execute the failed tasks |
 | `plugins.webbkoll.retry.timeRange`   | `number` (optional, default 360) | Period in minutes to be checked in influx, to know if a task failed |
-| `plugins.browsertime.delete_files_by_type`   | `object` (optional, no default) | Configuration for deletion of custom files. (e.g. mp4 files)  |
-| `plugins.browsertime.delete_files_by_type.type`   | `string` (required for 'delete_files_by_type') | The type / extension of the files we want to delete. (e.g. "mp4"). |
-| `plugins.browsertime.delete_files_by_type.age`   | `number` (required for 'delete_files_by_type') | Maximum age (in days) of the custom files. Any older file will be deleted. |
+| `plugins.webbkoll.delete_files_by_type`   | `object` (optional, no default) | Configuration for deletion of custom files. (e.g. mp4 files)  |
+| `plugins.webbkoll.delete_files_by_type.type`   | `string` (required for 'delete_files_by_type') | The type / extension of the files we want to delete. (e.g. "mp4"). |
+| `plugins.webbkoll.delete_files_by_type.age`   | `number` (required for 'delete_files_by_type') | Maximum age (in days) of the custom files. Any older file will be deleted. |
 | `urls`   | `object` (required) | Config for webbkoll. More detail below |
 
 **urls object**
