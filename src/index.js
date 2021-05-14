@@ -240,6 +240,48 @@ const getDataFromBackend = async( url ) => {
     });
 }
 
+function cleanupSVGs(folder, page) {
+    // get all countries' code
+    const regexp = /flag-icon-(\w+)/g;
+    const flags = [...page.matchAll(regexp)];
+    const flags_with_separator = flags.map((elem) => elem[1] + "-");
+
+    const nameHasFlag = (name) => {
+        // check if flag svg or other kind
+        if (name.match(/^[a-z][a-z]-/) === null) {
+            return false;
+        }
+        if (flags_with_separator.length === 0) {
+            return true;
+        }
+        for (let flag in flags_with_separator) {
+            if (name.startsWith(flag)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    const directoryPath = path.join(folder, 'fonts');
+    fs.readdir(directoryPath, function (err, files) {
+        if (err) {
+            return console.log('Unable to scan directory to remove svg files: ', err);
+        }
+        files.forEach(function (file) {
+            const [name, ext] = file.split('.');
+            if (nameHasFlag(name) && ext === 'svg') {
+                try {
+                    fs.unlinkSync(folder + '/fonts/'+file);
+                } catch(err) {
+                    console.error("Couldn't remove svg flag file", err);
+                }
+            }
+        });
+    });
+
+
+}
+
 
 const getDataFromWebbkoll = async( url, folder ) => {
     return new Promise(async (resolve, reject) => {
@@ -274,6 +316,7 @@ const getDataFromWebbkoll = async( url, folder ) => {
                 directory: folder,
             };
             const page_result = await scrape(options);
+            cleanupSVGs(folder, page_result[0].text);
 
             resolve(page_result[0].text);
         } catch (err) {
