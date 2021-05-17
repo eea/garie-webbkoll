@@ -1,6 +1,6 @@
 {
     "name": "garie-webbkoll",
-    "version": "1.2.6",
+    "version": "1.2.7",
     "description": "Garie Webbkoll Plugin",
     "engines": {
         "node": ">=6"
