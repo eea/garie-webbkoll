@@ -141,5 +141,7 @@ Currently the webbkoll garie plugin is not storing any data in InfluxDB.
 Always upgrade both webbkoll and webbkoll-backend, because there might be backward compatibility issues between them.
 For webbkoll-backend look for changes in https://github.com/andersju/webbkoll-backend and compare with our fork at https://github.com/eea/webbkoll-backend
 
+This plugin was updated to 2.0.0 and so were the backend and frontend. The latest changes from webbkoll backend and frontend are not compatible with an older version of this plugin.
+
 For more information please go to the [garie-plugin](https://github.com/eea/garie-plugin) repo.
 
