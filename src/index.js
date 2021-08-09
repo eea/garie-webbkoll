@@ -2,14 +2,15 @@ const garie_plugin = require('garie-plugin')
 const fs = require('fs-extra');
 const path = require('path');
 const config = require('../config');
-const request = require('request-promise');
+const request = require('request-promise').defaults({jar: true});
 const sleep = require('sleep-promise');
 const scrape = require('website-scraper');
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 
 const webbkoll_backend_uri = "http://"+process.env.BACKEND_HOST + ":" + process.env.BACKEND_PORT;
-const webbkoll_uri = "http://"+process.env.WEBBKOLL_HOST + ":" + process.env.WEBBKOLL_PORT+"/check";
+const webbkoll_uri = "http://"+process.env.WEBBKOLL_HOST + ":" + process.env.WEBBKOLL_PORT + "/en/check";
+const webbkoll = "http://"+process.env.WEBBKOLL_HOST + ":" + process.env.WEBBKOLL_PORT;
 
 const default_countries_cat1 = [
         "Denmark",
@@ -287,32 +288,53 @@ const getDataFromWebbkoll = async( url, folder ) => {
     return new Promise(async (resolve, reject) => {
         try {
             await sleep(5000)
-            const response = await request({
+
+            // get the csrf token to be able to POST for the result
+            let response = await request({
                 method: 'GET',
+                uri: webbkoll,
+                resolveWithFullResponse: true
+            });
+
+            const res = response.body.split('_csrf_token')[1];
+            const token = res.split('"')[4];
+
+            // simple:false necessary so we don't throw error when 302
+            response = await request({
+                method: 'POST',
                 uri: webbkoll_uri,
-                qs: {
-                  'url': url,
-                  'refresh': 'on'
+                simple: false,
+                form: {
+                '_csrf_token': token,
+                'url': url,
                 },
                 resolveWithFullResponse: true
             });
-            const status_uri = response.request.uri.href;
+
+            const status_uri = response.headers.location;
 
             let next_uri;
+            // we have to redirect to the previous headers.location
             while (true){
                 const status_response = await request({
                     method: 'GET',
-                    uri: status_uri,
+                    uri: webbkoll + status_uri,
                     resolveWithFullResponse: true
                 });
-                next_uri = status_response.request.uri.href;
-                if (next_uri !== status_uri){
+
+                // we wait for the result, so we query constantly until we have response different than status
+                if (status_response.headers.location !== undefined)
+                    next_uri = status_response.headers.location;
+                else
+                    next_uri = status_uri;
+
+                if (next_uri !== status_uri) {
                     break;
                 }
                 await sleep(500)
             }
             const options = {
-                urls: [{url: next_uri, filename: 'webbkoll.html'},],
+                urls: [{url: webbkoll + next_uri, filename: 'webbkoll.html'},],
                 directory: folder,
             };
             const page_result = await scrape(options);
@@ -340,7 +362,6 @@ const getData = async (item) => {
         try {
             const { reportDir } = item;
             const reportFolder = garie_plugin.utils.helpers.reportDirNow(reportDir);
-
 
             let html_data = await getDataFromWebbkoll(url, reportFolder);
 
@@ -380,6 +401,7 @@ console.log("Start");
 
 const main = async () => {
   try{
+
     const { app } = await garie_plugin.init({
       getData:getData,
       getMeasurement:myEmptyGetMeasurement,
