@@ -319,6 +319,8 @@ const getDataFromWebbkoll = async( url, folder ) => {
                 const status_response = await request({
                     method: 'GET',
                     uri: webbkoll + status_uri,
+                    simple: false,
+                    followRedirect: false,
                     resolveWithFullResponse: true
                 });
 
