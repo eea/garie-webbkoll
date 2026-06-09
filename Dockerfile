@@ -1,4 +1,4 @@
-FROM node:12.13.1
+FROM node:20
 
 RUN mkdir -p /usr/src/garie-plugin
 RUN mkdir -p /usr/src/garie-plugin/reports
