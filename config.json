@@ -2,6 +2,7 @@
   "plugins":{
         "webbkoll":{
             "cron": "0 */4 * * *",
+            "maxCpus": 4,
             "countries_cat1": [
                 "Denmark",
                 "Unknown"
@@ -40,7 +41,7 @@
     },
   "urls": [
     {
-      "url": "https://www.eea.europa.eu/"
+      "url": "https://airindex.eea.europa.eu"
     },
     {
       "url": "https://biodiversity.europa.eu/"
