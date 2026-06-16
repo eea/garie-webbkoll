@@ -1,18 +1,22 @@
 version: '3'
 services:
     influxdb:
-        image: 'influxdb:latest'
+        image: 'influxdb:2.7'
         ports:
             - 8086:8086
         environment:
-            - INFLUXDB_ADMIN_USER=admin
-            - INFLUXDB_ADMIN_PASSWORD=admin
+            - DOCKER_INFLUXDB_INIT_MODE=setup
+            - DOCKER_INFLUXDB_INIT_USERNAME=admin
+            - DOCKER_INFLUXDB_INIT_PASSWORD=adminadmin
+            - DOCKER_INFLUXDB_INIT_ORG=garie
+            - DOCKER_INFLUXDB_INIT_BUCKET=default
+            - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=dev-token
 
     webbkoll-backend:
-        image: eeacms/webbkoll-backend
+        image: eeacms/webbkoll-backend:299372-upgrade
 
     webbkoll:
-        image: eeacms/webbkoll
+        image: eeacms/webbkoll:299372-upgrade
         environment:
             - BACKEND_HOST=webbkoll-backend
             - BACKEND_PORT=8100
@@ -39,17 +43,13 @@ services:
             - BACKEND_PORT=8100
             - WEBBKOLL_HOST=webbkoll
             - WEBBKOLL_PORT=4000
+            - INFLUX_TOKEN=dev-token
+            - INFLUX_ORG=garie
         links:
+            - influxdb
             - webbkoll-backend:webbkoll-backend
             - webbkoll:webbkoll
         depends_on:
             - influxdb
             - webbkoll
         command: bash -c "tail -f /dev/null"
-
-    chronograf:
-        image: 'chronograf:latest'
-        ports:
-            - 8888:8888
-        depends_on:
-            - influxdb
