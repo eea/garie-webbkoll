@@ -81,8 +81,13 @@ function countCookieAlerts(dom, tableId) {
     }
 }
 
-function getResults(url, file){
+function getResults(url, file, jsonData){
     const dom = new JSDOM(file);
+
+    // Extract headers from JSON backend data for header-based scoring
+    const mainHeaders = (jsonData && jsonData.responses && jsonData.responses[0])
+        ? jsonData.responses[0].headers
+        : {};
 
     let https_score = 0;
     const https_status = getSummaryStatus(dom, '#https');
@@ -234,9 +239,53 @@ function getResults(url, file){
         }
     } catch (err) {}
 
+    // X-Content-Type-Options (from JSON headers)
+    let xcto_score = 0;
+    try {
+        const xcto = mainHeaders['x-content-type-options'] || '';
+        if (xcto && xcto.toLowerCase().includes('nosniff')) {
+            xcto_score = 5;
+        }
+    } catch(err) { xcto_score = 0; }
+
+    // X-Frame-Options (from JSON headers)
+    let xfo_score = 0;
+    try {
+        const xfo = mainHeaders['x-frame-options'] || '';
+        if (xfo) {
+            const normalized = xfo.toUpperCase().replace(/['"]/g, '');
+            if (normalized === 'DENY') {
+                xfo_score = 5;
+            } else if (normalized === 'SAMEORIGIN') {
+                xfo_score = 3;
+            }
+        }
+    } catch(err) { xfo_score = 0; }
+
+    // Permissions-Policy (from JSON headers)
+    let permissions_score = 0;
+    try {
+        const pp = mainHeaders['permissions-policy'] || '';
+        if (pp) {
+            const directives = pp.split(',').map(d => d.trim());
+            const restricted = directives.filter(d => {
+                const val = d.split('=')[1] || '';
+                return val.includes('none') || val.includes('()') || val.includes('self');
+            });
+            if (restricted.length >= 5) {
+                permissions_score = 5;
+            } else if (restricted.length >= 2) {
+                permissions_score = 3;
+            } else if (restricted.length >= 1) {
+                permissions_score = 1;
+            }
+        }
+    } catch(err) { permissions_score = 0; }
+
     const raw_total = https_score + hsts_score + csp_score + rp_score
-        + sri_score + headers_score + cookies_score + tpr_score + server_score;
-    const MAX_POSSIBLE = 110;
+        + sri_score + headers_score + cookies_score + tpr_score + server_score
+        + xcto_score + xfo_score + permissions_score;
+    const MAX_POSSIBLE = 125;
     const total = Math.round((raw_total / MAX_POSSIBLE) * 100);
 
     const result = [{
@@ -252,7 +301,10 @@ function getResults(url, file){
             security_headers:headers_score,
             cookies:cookies_score,
             third_party_requests:tpr_score,
-            server_location:server_score
+            server_location:server_score,
+            x_content_type_options:xcto_score,
+            x_frame_options:xfo_score,
+            permissions_policy:permissions_score
         }
     }];
     return (result);
@@ -300,7 +352,7 @@ function cleanupSVGs(folder, page) {
         if (flags_with_separator.length === 0) {
             return true;
         }
-        for (let flag in flags_with_separator) {
+        for (let flag of flags_with_separator) {
             if (name.startsWith(flag)) {
                 return true;
             }
@@ -308,16 +360,17 @@ function cleanupSVGs(folder, page) {
         return false;
     }
 
-    const directoryPath = path.join(folder, 'fonts');
+    const directoryPath = path.join(folder, 'webbkoll_files', 'fonts');
+    if (!fs.existsSync(directoryPath)) return;
     fs.readdir(directoryPath, function (err, files) {
         if (err) {
-            return console.log('Unable to scan directory to remove svg files: ', err);
+            return console.error('Unable to scan directory to remove svg files: ', err);
         }
         files.forEach(function (file) {
             const [name, ext] = file.split('.');
             if (nameHasFlag(name) && ext === 'svg') {
                 try {
-                    fs.unlinkSync(folder + '/fonts/'+file);
+                    fs.unlinkSync(path.join(directoryPath, file));
                 } catch(err) {
                     console.error("Couldn't remove svg flag file", err);
                 }
@@ -328,6 +381,30 @@ function cleanupSVGs(folder, page) {
 
 }
 
+
+// website-scraper@4.0.0 double-encodes non-ASCII: original UTF-8 bytes
+// get interpreted as Latin-1 then re-encoded as UTF-8. C1 control chars
+// (U+0080-U+009F) never appear in valid HTML — their presence signals
+// double-encoding. Reverse with Latin-1 → UTF-8 roundtrip.
+// Pre-decode HTML entities representing single bytes (0-255) because
+// cheerio may entity-encode certain Latin-1 chars (e.g. \xA0 → &nbsp;)
+// which would otherwise leave gaps in recovered multi-byte UTF-8 sequences.
+function fixDoubleEncoding(html) {
+    if (/[-]/.test(html)) {
+        html = html.replace(/&#(\d+);/g, (_, d) => {
+            const n = parseInt(d, 10);
+            return n < 256 ? String.fromCharCode(n) : `&#${d};`;
+        });
+        html = html.replace(/&#x([0-9a-f]+);/gi, (_, h) => {
+            const n = parseInt(h, 16);
+            return n < 256 ? String.fromCharCode(n) : `&#x${h};`;
+        });
+        html = html.replace(/&nbsp;/g, ' ');
+        console.log('Fixing double-encoded UTF-8 in scraped HTML');
+        return Buffer.from(html, 'latin1').toString('utf8');
+    }
+    return html;
+}
 
 const getDataFromWebbkoll = async( url, folder ) => {
     return new Promise(async (resolve, reject) => {
@@ -381,13 +458,14 @@ const getDataFromWebbkoll = async( url, folder ) => {
                 await sleep(500)
             }
             const options = {
-                urls: [{url: webbkoll + next_uri, filename: 'webbkoll.html'},],
+                urls: [{url: webbkoll + next_uri, filename: 'webbkoll.html', encoding: 'utf8'}],
                 directory: folder,
             };
             const page_result = await scrape(options);
             cleanupSVGs(folder, page_result[0].text);
 
-            resolve(page_result[0].text);
+            let html_data = fixDoubleEncoding(page_result[0].text);
+            resolve(html_data);
         } catch (err) {
             if (err.error !== undefined) {
                 if (err.error.success === false){
@@ -432,7 +510,7 @@ const getData = async (item) => {
               console.log(err)
             })
 
-            const result = getResults(url, html_data);
+            const result = getResults(url, html_data, json_data);
             resolve(result)
         } catch (err) {
             console.log(`Failed to get data for ${url}`, err);
