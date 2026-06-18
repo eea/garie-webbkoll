@@ -59,143 +59,234 @@ const myEmptyGetMeasurement = async (item, data) => {
     });
 }
 
-function getResults(url, file){
+function getSummaryStatus(dom, anchorHref) {
+    try {
+        const li = dom.window.document.querySelector(`a[href='${anchorHref}']`).closest('li');
+        if (li.querySelector('.success')) return 'success';
+        if (li.querySelector('.warning')) return 'warning';
+        if (li.querySelector('.alert')) return 'alert';
+        return null;
+    } catch (err) {
+        return null;
+    }
+}
+
+function countCookieAlerts(dom, tableId) {
+    try {
+        const table = dom.window.document.querySelector(`#${tableId}`);
+        if (!table) return 0;
+        return table.querySelectorAll('span.alert').length;
+    } catch (err) {
+        return 0;
+    }
+}
+
+function getResults(url, file, jsonData){
     const dom = new JSDOM(file);
 
-    let total_multiplier = 1;
+    // Extract headers from JSON backend data for header-based scoring
+    const mainHeaders = (jsonData && jsonData.responses && jsonData.responses[0])
+        ? jsonData.responses[0].headers
+        : {};
 
-    // HTTPS
     let https_score = 0;
-    try{
-        const https_element = dom.window.document.querySelector("a[href='#https']").closest('li').textContent;
-        const https_element_text = https_element.split("HTTPS by default:")[1].trim();
-        if (https_element_text === "Yes"){
-            https_score = 16;
-        }
-        if (https_element_text === "Yes, but has issues"){
-            https_score = 8;
-        }
-        if (https_element_text === "No; insecure"){
-            https_score = 0;
-            total_multiplier = 0;
-        }
-    }
-    catch(err){
-        https_score = 0;
-    }
+    const https_status = getSummaryStatus(dom, '#https');
+    if (https_status === 'success') https_score = 20;
+    else if (https_status === 'warning') https_score = 10;
 
-    // Content security policy
-    let csp_score = 0;
-    try{
-        const csp_element = dom.window.document.querySelector("a[href='#csp']").closest('li').textContent;
-        const csp_element_text = csp_element.split("Content Security Policy:")[1].trim();
-        if (csp_element_text === "Good policy") {
-            csp_score = 16;
-        }
-        if (csp_element_text === "Implemented, but has problems") {
-            csp_score = 8;
-        }
-        if ((csp_element_text === "Invalid header") || (csp_element_text === "Not implemented")){
-            csp_score = 0;
-        }
-    }
-    catch(err){
-        csp_score = 0;
-    }
-
-    // Referrer Policy
-    let rp_score = 0;
-    try{
-        const rp_element = dom.window.document.querySelector("a[href='#referrers']").closest('li').textContent;
-        const rp_element_text = rp_element.split("Referrer Policy:")[1].trim();
-        if (rp_element_text === "Referrers not leaked"){
-            rp_score = 16;
-        }
-        if (rp_element_text === "Referrers partially leaked"){
-            rp_score = 8;
-        }
-        if ((rp_element_text === "Referrers leaked") || (rp_element_text === "Unknown")) {
-            rp_score = 0;
-        }
-    }
-    catch(err){
-        rp_score = 0;
-    }
-
-    // Cookies
-    let cookies_score = 0;
-    try{
-        const cookies_first = dom.window.document.querySelector("#cookies-first");
-        const cookies_third = dom.window.document.querySelector("#cookies-third");
-
-        let third_party_exist = true;
-        if (cookies_third === undefined){
-            third_party_exist = false;
-        }
-
-        let all_first_party_green = true;
-        if (cookies_first !== undefined){
-            if (cookies_first.querySelector("table").querySelectorAll(".icon-times.alert").length > 0){
-                all_first_party = false;
+    let hsts_score = 0;
+    try {
+        const hsts_section = dom.window.document.querySelector('#hsts');
+        if (hsts_section) {
+            const hsts_header = hsts_section.closest('section').querySelector('h3');
+            if (hsts_header && hsts_header.querySelector('.success')) {
+                hsts_score = 10;
+            } else if (hsts_header && hsts_header.querySelector('.warning')) {
+                hsts_score = 5;
             }
         }
-        if (!third_party_exist && all_first_party_green){
-            cookies_score = 16;
+    } catch (err) {}
+
+    let csp_score = 0;
+    const csp_status = getSummaryStatus(dom, '#csp');
+    if (csp_status === 'success') csp_score = 20;
+    else if (csp_status === 'warning') csp_score = 10;
+
+    let rp_score = 0;
+    const rp_status = getSummaryStatus(dom, '#referrers');
+    if (rp_status === 'success') rp_score = 10;
+    else if (rp_status === 'warning') rp_score = 5;
+
+    let sri_score = 0;
+    try {
+        const sri_section = dom.window.document.querySelector('#sri');
+        if (sri_section) {
+            const sri_header = sri_section.closest('section').querySelector('h3');
+            if (sri_header && sri_header.querySelector('.success')) {
+                sri_score = 10;
+            } else if (sri_header && sri_header.querySelector('.warning')) {
+                sri_score = 5;
+            }
         }
-        if (third_party_exist && all_first_party_green){
+    } catch (err) {}
+
+    let headers_score = 0;
+    try {
+        const headers_table = dom.window.document.querySelector('#headers table');
+        if (headers_table) {
+            const rows = headers_table.querySelectorAll('tbody tr');
+            let passed = 0;
+            let total = 0;
+            rows.forEach(row => {
+                const passCell = row.querySelector('td.pass');
+                if (passCell) {
+                    total++;
+                    if (passCell.querySelector('.success')) passed++;
+                }
+            });
+            if (total > 0) {
+                headers_score = Math.round((passed / total) * 10);
+            }
+        }
+    } catch (err) {}
+
+    let cookies_score = 0;
+    try {
+        const cookies_first = dom.window.document.querySelector('#cookies-first');
+        const cookies_third = dom.window.document.querySelector('#cookies-third');
+
+        const first_party_alerts = countCookieAlerts(dom, 'cookies-first');
+        const third_party_alerts = countCookieAlerts(dom, 'cookies-third');
+
+        const has_third_party = (cookies_third !== null);
+
+        if (!has_third_party && first_party_alerts === 0) {
+            cookies_score = 10;
+        } else if (has_third_party && third_party_alerts === 0 && first_party_alerts === 0) {
             cookies_score = 8;
+        } else if (first_party_alerts > 0) {
+            cookies_score = Math.max(0, 10 - first_party_alerts * 2);
         }
-        if (!third_party_exist && !all_first_party_green){
-            cookies_score = 8;
+        if (has_third_party && third_party_alerts > 0) {
+            cookies_score = Math.max(0, cookies_score - third_party_alerts * 2);
         }
-    }
-    catch(err){
-        cookies_score = 0;
-    }
-    // Third-party requests
+    } catch (err) {}
+
     let tpr_score = 0;
-    try{
-        const tpr_element = dom.window.document.querySelector("a[href='#requests']").closest('li').textContent;
-        const tpr_element_text = tpr_element.split("Third-party requests:")[1].trim();
-
-        if (tpr_element_text === "0"){
-            tpr_score = 16;
+    try {
+        const tpr_li = dom.window.document.querySelector("a[href='#requests']").closest('li');
+        const strong = tpr_li.querySelector('strong');
+        if (strong) {
+            const count = parseInt(strong.textContent.trim(), 10);
+            if (!isNaN(count)) {
+                if (count === 0) {
+                    tpr_score = 10;
+                } else if (count <= 3) {
+                    tpr_score = 8;
+                } else if (count <= 10) {
+                    tpr_score = 5;
+                } else if (count <= 50) {
+                    tpr_score = 2;
+                }
+            }
         }
-        if (tpr_element_text !== "0"){
-            // TODO whitelist for some requests
-            tpr_score = 0;
-        }
-    }
-    catch(err){
-        tpr_score = 0;
-    }
+        const host_count_li = dom.window.document.querySelector("a[href='#requests']").closest('section')
+            || dom.window.document.querySelector('#requests');
+    } catch (err) {}
 
-    // Server location
     let server_score = 0;
     const countries_cat1 = config.plugins.webbkoll.countries_cat1 || default_countries_cat1;
     const countries_cat2 = config.plugins.webbkoll.countries_cat2 || default_countries_cat2;
-    try{
-        const server_element = dom.window.document.querySelector("a[href='#server-location']").closest('li').textContent;
-        const server_element_text = server_element.split("Server location:")[1].split("—")[0].trim();
-        if (countries_cat1.includes(server_element_text)) {
-            server_score = 20;
-        }
-        else{
-            if (countries_cat2.includes(server_element_text)) {
-                server_score = 16;
+    try {
+        const server_section = dom.window.document.querySelector('#server-location');
+        if (server_section) {
+            const alpha_div = server_section.closest('section').querySelector('.alpha');
+            if (alpha_div) {
+                const text = alpha_div.textContent;
+                let found_country = null;
+                for (const country of [...countries_cat1, ...countries_cat2]) {
+                    if (text.includes(country)) {
+                        found_country = country;
+                        break;
+                    }
+                }
+                if (found_country) {
+                    if (countries_cat1.includes(found_country)) {
+                        server_score = 10;
+                    } else if (countries_cat2.includes(found_country)) {
+                        server_score = 7;
+                    }
+                }
+                if (!found_country) {
+                    const server_li = dom.window.document.querySelector("a[href='#server-location']").closest('li');
+                    const li_text = server_li.textContent;
+                    for (const country of countries_cat1) {
+                        if (li_text.includes(country)) {
+                            server_score = 10;
+                            break;
+                        }
+                    }
+                    if (server_score === 0) {
+                        for (const country of countries_cat2) {
+                            if (li_text.includes(country)) {
+                                server_score = 7;
+                                break;
+                            }
+                        }
+                    }
+                }
             }
-            else {
-                server_score = 0;
-                total_multiplier = 0;
-            }
         }
-    }
-    catch(err){
-        server_score = 0;
-    }
+    } catch (err) {}
 
-    // Final score
-    const total = total_multiplier * (https_score + csp_score + rp_score + cookies_score + tpr_score + server_score);
+    // X-Content-Type-Options (from JSON headers)
+    let xcto_score = 0;
+    try {
+        const xcto = mainHeaders['x-content-type-options'] || '';
+        if (xcto && xcto.toLowerCase().includes('nosniff')) {
+            xcto_score = 5;
+        }
+    } catch(err) { xcto_score = 0; }
+
+    // X-Frame-Options (from JSON headers)
+    let xfo_score = 0;
+    try {
+        const xfo = mainHeaders['x-frame-options'] || '';
+        if (xfo) {
+            const normalized = xfo.toUpperCase().replace(/['"]/g, '');
+            if (normalized === 'DENY') {
+                xfo_score = 5;
+            } else if (normalized === 'SAMEORIGIN') {
+                xfo_score = 3;
+            }
+        }
+    } catch(err) { xfo_score = 0; }
+
+    // Permissions-Policy (from JSON headers)
+    let permissions_score = 0;
+    try {
+        const pp = mainHeaders['permissions-policy'] || '';
+        if (pp) {
+            const directives = pp.split(',').map(d => d.trim());
+            const restricted = directives.filter(d => {
+                const val = d.split('=')[1] || '';
+                return val.includes('none') || val.includes('()') || val.includes('self');
+            });
+            if (restricted.length >= 5) {
+                permissions_score = 5;
+            } else if (restricted.length >= 2) {
+                permissions_score = 3;
+            } else if (restricted.length >= 1) {
+                permissions_score = 1;
+            }
+        }
+    } catch(err) { permissions_score = 0; }
+
+    const raw_total = https_score + hsts_score + csp_score + rp_score
+        + sri_score + headers_score + cookies_score + tpr_score + server_score
+        + xcto_score + xfo_score + permissions_score;
+    const MAX_POSSIBLE = 125;
+    const total = Math.round((raw_total / MAX_POSSIBLE) * 100);
 
     const result = [{
         measurement:"webbkoll",
@@ -203,11 +294,17 @@ function getResults(url, file){
         fields:{
             value:total,
             https:https_score,
+            hsts:hsts_score,
             content_security_policy:csp_score,
             referrer_policy:rp_score,
+            subresource_integrity:sri_score,
+            security_headers:headers_score,
             cookies:cookies_score,
             third_party_requests:tpr_score,
-            server_location:server_score
+            server_location:server_score,
+            x_content_type_options:xcto_score,
+            x_frame_options:xfo_score,
+            permissions_policy:permissions_score
         }
     }];
     return (result);
@@ -255,7 +352,7 @@ function cleanupSVGs(folder, page) {
         if (flags_with_separator.length === 0) {
             return true;
         }
-        for (let flag in flags_with_separator) {
+        for (let flag of flags_with_separator) {
             if (name.startsWith(flag)) {
                 return true;
             }
@@ -263,16 +360,17 @@ function cleanupSVGs(folder, page) {
         return false;
     }
 
-    const directoryPath = path.join(folder, 'fonts');
+    const directoryPath = path.join(folder, 'webbkoll_files', 'fonts');
+    if (!fs.existsSync(directoryPath)) return;
     fs.readdir(directoryPath, function (err, files) {
         if (err) {
-            return console.log('Unable to scan directory to remove svg files: ', err);
+            return console.error('Unable to scan directory to remove svg files: ', err);
         }
         files.forEach(function (file) {
             const [name, ext] = file.split('.');
             if (nameHasFlag(name) && ext === 'svg') {
                 try {
-                    fs.unlinkSync(folder + '/fonts/'+file);
+                    fs.unlinkSync(path.join(directoryPath, file));
                 } catch(err) {
                     console.error("Couldn't remove svg flag file", err);
                 }
@@ -283,6 +381,30 @@ function cleanupSVGs(folder, page) {
 
 }
 
+
+// website-scraper@4.0.0 double-encodes non-ASCII: original UTF-8 bytes
+// get interpreted as Latin-1 then re-encoded as UTF-8. C1 control chars
+// (U+0080-U+009F) never appear in valid HTML — their presence signals
+// double-encoding. Reverse with Latin-1 → UTF-8 roundtrip.
+// Pre-decode HTML entities representing single bytes (0-255) because
+// cheerio may entity-encode certain Latin-1 chars (e.g. \xA0 → &nbsp;)
+// which would otherwise leave gaps in recovered multi-byte UTF-8 sequences.
+function fixDoubleEncoding(html) {
+    if (/[-]/.test(html)) {
+        html = html.replace(/&#(\d+);/g, (_, d) => {
+            const n = parseInt(d, 10);
+            return n < 256 ? String.fromCharCode(n) : `&#${d};`;
+        });
+        html = html.replace(/&#x([0-9a-f]+);/gi, (_, h) => {
+            const n = parseInt(h, 16);
+            return n < 256 ? String.fromCharCode(n) : `&#x${h};`;
+        });
+        html = html.replace(/&nbsp;/g, ' ');
+        console.log('Fixing double-encoded UTF-8 in scraped HTML');
+        return Buffer.from(html, 'latin1').toString('utf8');
+    }
+    return html;
+}
 
 const getDataFromWebbkoll = async( url, folder ) => {
     return new Promise(async (resolve, reject) => {
@@ -336,13 +458,14 @@ const getDataFromWebbkoll = async( url, folder ) => {
                 await sleep(500)
             }
             const options = {
-                urls: [{url: webbkoll + next_uri, filename: 'webbkoll.html'},],
+                urls: [{url: webbkoll + next_uri, filename: 'webbkoll.html', encoding: 'utf8'}],
                 directory: folder,
             };
             const page_result = await scrape(options);
             cleanupSVGs(folder, page_result[0].text);
 
-            resolve(page_result[0].text);
+            let html_data = fixDoubleEncoding(page_result[0].text);
+            resolve(html_data);
         } catch (err) {
             if (err.error !== undefined) {
                 if (err.error.success === false){
@@ -387,7 +510,7 @@ const getData = async (item) => {
               console.log(err)
             })
 
-            const result = getResults(url, html_data);
+            const result = getResults(url, html_data, json_data);
             resolve(result)
         } catch (err) {
             console.log(`Failed to get data for ${url}`, err);
